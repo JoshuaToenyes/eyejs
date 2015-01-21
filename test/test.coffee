@@ -2,7 +2,7 @@ expect      = (require 'chai').expect
 sinon       = require 'sinon'
 testability = (require 'browserify-testability')(require)
 fakeio      = require './doubles/socket-io'
-eye         = require './../dist/eye'
+eye         = require './../common/eye'
 
 eye = null
 
@@ -10,7 +10,7 @@ describe 'eye.js tests', ->
 
   beforeEach ->
     fakeio.reset()
-    eye = testability.require('./../dist/eye', {
+    eye = testability.require('./../common/eye', {
       'socket.io-client': fakeio
     })
 

@@ -10,12 +10,19 @@ module.exports = (grunt) ->
       app: ['src/**/*.coffee']
 
     coffee:
-      eye:
-        expand: true,
-        flatten: false,
-        cwd: 'src',
-        src: ['**/*.coffee'],
-        dest: 'tmp/dist',
+      common:
+        expand: true
+        flatten: false
+        cwd: 'src/coffee'
+        src: ['common/**/*.coffee']
+        dest: 'tmp'
+        ext: '.js'
+      chrome:
+        expand: true
+        flatten: false
+        cwd: 'src/coffee'
+        src: ['chrome/**/*.coffee']
+        dest: 'tmp'
         ext: '.js'
       test:
         expand: true,
@@ -26,9 +33,14 @@ module.exports = (grunt) ->
         ext: '.js'
 
     browserify:
-      dist:
+      common:
         files:
-          'dist/eye.js': ['tmp/dist/**/*.js']
+          'dist/common/eye.js': ['tmp/common/**/*.js']
+      chrome:
+        files:
+          'dist/chrome/background.js': ['tmp/chrome/background.js']
+          'dist/chrome/foreground.js': ['tmp/chrome/foreground.js']
+          'dist/chrome/eye.js': ['tmp/common/**/*.js']
       test:
         files:
           'test/test.js': ['tmp/test/**/*.js']
@@ -37,15 +49,6 @@ module.exports = (grunt) ->
             debug: true
           preBundleCB: (b) ->
             b.plugin((require 'browserify-testability').plugin)
-
-    # ### uglify
-    # Uglifies the main Javascript build file.
-    uglify:
-      dist:
-        files:
-          'dist/eye.min.js': ['dist/eye.js']
-      options:
-        sourceMap: true
 
     # ### mocha_phantomjs
     # Runs mocha tests in PhantomJS.
@@ -67,12 +70,39 @@ module.exports = (grunt) ->
 
     replace:
       version:
-        src: ["dist/<%= pkg.version %>"],
+        src: ["chrome/<%= pkg.version %>"],
         overwrite: true,
         replacements: [{
           from: "*|VERSION|*",
           to: "<%= pkg.version %>"
         }]
+
+    copy:
+      chrome:
+        files: [
+          {
+            expand: true
+            flatten: true
+            src: ['assets/icons/**', 'assets/manifests/chrome/**']
+            dest: 'dist/chrome/'
+            filter: 'isFile'
+          }
+        ]
+
+    jade:
+      index:
+        files:
+          'dist/chrome/popup.html': 'src/jade/common/popup.jade'
+
+    sass:
+      dist:
+        options:
+          loadPath: 'lib/'
+        files:
+          'dist/assets/css/app.css': 'src/sass/app.sass'
+
+
+
 
 
   grunt.initConfig(config)
@@ -86,15 +116,19 @@ module.exports = (grunt) ->
   grunt.loadNpmTasks('grunt-browserify')
   grunt.loadNpmTasks('grunt-contrib-uglify')
   grunt.loadNpmTasks('grunt-mocha-phantomjs')
+  grunt.loadNpmTasks('grunt-contrib-copy')
+  grunt.loadNpmTasks('grunt-contrib-jade')
+  grunt.loadNpmTasks('grunt-contrib-sass')
 
   grunt.registerTask 'compile', [
     'coffeelint'
     'clean:dist'
     'coffee'
     'browserify'
-    'uglify'
     'replace:version'
     'clean:tmp'
+    'copy'
+    'jade'
   ]
 
   grunt.registerTask 'test', [

@@ -1,0 +1,27 @@
+{
+  "manifest_version": 2,
+  "name": "Eyelluminati",
+  "description": "Enable eye interactivity for the web.",
+  "version": "1.0",
+  "permissions": ["tabs"],
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["foreground.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "icons": {
+    "16": "eye-16.png",
+    "48": "eye-48.png",
+    "128": "eye-128.png" },
+  "browser_action": {
+    "default_icon": "eye-128.png",
+    "default_popup": "popup.html"
+  },
+  "web_accessible_resources": ["eye.js"]
+}

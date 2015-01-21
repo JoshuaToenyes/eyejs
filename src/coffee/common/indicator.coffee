@@ -25,20 +25,24 @@ module.exports = class Indicator
 
     transform  = opts.transform  or 'translate3d(0, 0, 0)'
     transition = opts.transition or 'all 0.1s ease-out'
-    visibility = opts.visible ? 'visible' : 'hidden'
+
+    if opts.visible?
+      visibility = opts.visible ? 'visible' : 'hidden'
+    else
+      visibility = 'visible'
 
     @transforms = {}
     @size = +opts.size or 20
     @scaleTimer = null
 
     @el = document.createElement('div')
-    @el.style =
+    styles =
       position:         'fixed',
-      height:           @size,
-      width:            @size,
+      height:           @size + 'px',
+      width:            @size + 'px',
       top:              0,
       left:             0,
-      borderRadius:     @size,
+      borderRadius:     @size + 'px',
       visibility:       visibility,
       background:       opts.color or 'rgba(160, 0, 0, 0.3)',
       transform:        transform,
@@ -49,7 +53,8 @@ module.exports = class Indicator
       MozTransition:    transition,
       WebkitTransition: transition,
       msTransition:     transition
-
+    for k, s of styles
+      @el.style[k] = s
     document.body.appendChild(@el)
 
 
@@ -72,7 +77,7 @@ module.exports = class Indicator
 
   draw: ->
     ts = []
-    for t in @transforms
+    for t of @transforms
       ts.push "#{t}(#{@transforms[t]})" unless @transforms[t] is null
 
     if ts.length is 0 then t = 'none' else t = ts.join ' '

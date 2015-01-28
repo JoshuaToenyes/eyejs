@@ -21,8 +21,7 @@ leftCount = 0
 rightCount = 0
 
 
-getElement = (frame) ->
-  document.elementFromPoint frame.avg.x, frame.avg.y
+getElement = -> window.Eye.indicator.getGazeElement()
 
 
 triggerEvent = (event) ->
@@ -90,8 +89,8 @@ handleBlinks = (frame) ->
 # Handles gaze event. If the current gaze element is unchanged, then
 # do nothing... but if it has changed, trigger a gazeleave on previous and
 # a gaze on the new one.
-handleGaze = (frame) ->
-  el = getElement frame
+handleGaze = ->
+  el = getElement()
   if el and el isnt Eye.indicator.el and el isnt gazeEl
     if gazeEl isnt null then triggerEvent 'gazeleave', gazeEl
     gazeEl = el
@@ -101,45 +100,62 @@ handleGaze = (frame) ->
 
 
 
+document.addEventListener 'DOMContentLoaded', ->
 
-# Create the global Eye object.
-window.Eye =
+  # Create the global Eye object.
+  window.Eye =
 
-  indicator: new Indicator
+    indicator: new Indicator
 
-  freeze: ->
-    @frozen = true
-    setTimeout =>
-      @frozen = false
-    , 1500
+    freeze: ->
+      @frozen = true
+      setTimeout =>
+        @frozen = false
+      , 1500
 
-  frozen: false
+    frozen: false
 
-  handleFrame: (frame) ->
-    if window.Eye.frozen then return
-    if lastFrame
+    windowOffsetX: 0
 
-      closedThisFrame = frame.avg.x == 0 and frame.avg.y == 0
-      openLastFrame   = lastFrame.avg.x != 0 and lastFrame.avg.y != 0
+    windowOffsetY: 0
 
-      closedLastFrame = lastFrame.avg.x == 0 and lastFrame.avg.y == 0
-      openThisFrame   = frame.avg.x != 0 and frame.avg.y != 0
+    handleFrame: (frame) ->
+      if window.Eye.frozen then return
+      if lastFrame
 
-      if closedThisFrame and openLastFrame
-        closes.push(new Date());
+        closedThisFrame = frame.avg.x == 0 and frame.avg.y == 0
+        openLastFrame   = lastFrame.avg.x != 0 and lastFrame.avg.y != 0
 
-      if closedLastFrame and openThisFrame
-        opens.push(new Date());
+        closedLastFrame = lastFrame.avg.x == 0 and lastFrame.avg.y == 0
+        openThisFrame   = frame.avg.x != 0 and frame.avg.y != 0
 
-    lastFrame = frame
+        if closedThisFrame and openLastFrame
+          closes.push(new Date());
 
-    if frame.avg.x != 0 and frame.avg.y != 0
-      window.Eye.indicator.move frame.avg.x, frame.avg.y
+        if closedLastFrame and openThisFrame
+          opens.push(new Date());
 
-      handleGaze(frame)
-      handleBlinks(frame)
+      lastFrame = frame
 
-  connection: require './connection'
+      if frame.avg.x != 0 and frame.avg.y != 0
+
+        # compute width of borders
+        borderWidth = (window.outerWidth - window.innerWidth) / 2
+
+        # compute absolute page position
+        innerScreenX = window.screenX + borderWidth
+        innerScreenY = (window.outerHeight - window.innerHeight - borderWidth) + window.screenY
+
+        # Correct for window offsets.
+        frame.avg.x -= innerScreenX
+        frame.avg.y -= innerScreenY
+
+        window.Eye.indicator.move frame.avg.x, frame.avg.y
+
+        handleGaze()
+        handleBlinks(frame)
+
+    connection: require './connection'
 
 
-window.Eye.connection.connect()
+  window.Eye.connection.connect()

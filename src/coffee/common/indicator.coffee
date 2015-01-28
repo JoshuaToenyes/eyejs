@@ -1,3 +1,6 @@
+_ = require 'lodash'
+
+
 
 ##
 # Gaze indicator class represents the gaze-indicator object dynamically
@@ -24,7 +27,7 @@ module.exports = class Indicator
   constructor: (opts = {}) ->
 
     transform  = opts.transform  or 'translate3d(0, 0, 0)'
-    transition = opts.transition or 'all 0.1s ease-out'
+    transition = opts.transition or '-webkit-transform 0.2s ease-out'
 
     if opts.visible?
       visibility = opts.visible ? 'visible' : 'hidden'
@@ -32,35 +35,45 @@ module.exports = class Indicator
       visibility = 'visible'
 
     @transforms = {}
-    @size = +opts.size or 20
+    @size = +opts.size or 40
     @scaleTimer = null
 
     @el = document.createElement('div')
     styles =
-      position:         'fixed',
-      height:           @size + 'px',
-      width:            @size + 'px',
-      top:              0,
-      left:             0,
-      borderRadius:     @size + 'px',
-      visibility:       visibility,
-      background:       opts.color or 'rgba(160, 0, 0, 0.3)',
-      transform:        transform,
-      MozTransform:     transform,
-      WebkitTransform:  transform,
-      msTransform:      transform,
-      transition:       transition,
-      MozTransition:    transition,
-      WebkitTransition: transition,
+      position:         'fixed'
+      height:           @size + 'px'
+      width:            @size + 'px'
+      top:              0
+      left:             0
+      borderRadius:     @size + 'px'
+      visibility:       visibility
+      background:       opts.color or 'rgba(255, 255, 255, 0.2)'
+      border:           '1px solid rgba(0,0,0,0.3)'
+      boxShadow:        '0 0 6px rgba(255,255,255,0.1)'
+      transform:        transform
+      MozTransform:     transform
+      WebkitTransform:  transform
+      msTransform:      transform
+      transition:       transition
+      MozTransition:    transition
+      WebkitTransition: transition
       msTransition:     transition
     for k, s of styles
       @el.style[k] = s
     document.body.appendChild(@el)
 
+    @getGazeElement = _.throttle =>
+      [x, y] = @center()
+      @el.style.visibility = 'hidden'
+      el = document.elementFromPoint x, y
+      @el.style.visibility = 'visible'
+      el
+    , 100
+
 
   center: ->
     b = @el.getBoundingClientRect()
-    [b.left + 0.5 * @size, b.top + 0.5 * @size]
+    [parseInt(b.left + 0.5 * @size), parseInt(b.top + 0.5 * @size)]
 
 
   move: (x, y) ->

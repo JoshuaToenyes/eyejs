@@ -58,16 +58,22 @@ module.exports = class Indicator
       MozTransition:    transition
       WebkitTransition: transition
       msTransition:     transition
+      zIndex:           100000
     for k, s of styles
       @el.style[k] = s
     document.body.appendChild(@el)
 
-    @getGazeElement = _.throttle =>
+    # Traces concentric circles...
+    @getGazeElements = _.throttle =>
       [x, y] = @center()
       @el.style.visibility = 'hidden'
-      el = document.elementFromPoint x, y
+      els = []
+      for r in [0..@size/2] by 10
+        for a in [0..2] by 0.2
+          el = document.elementFromPoint x + r * Math.cos(a * Math.PI), y + r * Math.sin(a * Math.PI)
+          els.push(el) unless el in els or el is null
       @el.style.visibility = 'visible'
-      el
+      els
     , 100
 
 

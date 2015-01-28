@@ -12,7 +12,7 @@ closes    = new Buffer()
 lastFrame = null
 
 # Element currently gazing-at.
-gazeEl    = null
+gazeEls    = []
 
 # Number of frames the left-eye has been closed for.
 leftCount = 0
@@ -21,12 +21,10 @@ leftCount = 0
 rightCount = 0
 
 
-getElement = -> window.Eye.indicator.getGazeElement()
-
-
 triggerEvent = (event) ->
   evt = new CustomEvent event
-  gazeEl?.dispatchEvent(evt)
+  for el in gazeEls
+    el.dispatchEvent(evt)
 
 
 handleWink = (side, el) ->
@@ -90,11 +88,11 @@ handleBlinks = (frame) ->
 # do nothing... but if it has changed, trigger a gazeleave on previous and
 # a gaze on the new one.
 handleGaze = ->
-  el = getElement()
-  if el and el isnt Eye.indicator.el and el isnt gazeEl
-    if gazeEl isnt null then triggerEvent 'gazeleave', gazeEl
-    gazeEl = el
-    triggerEvent 'gaze', gazeEl
+  els = window.Eye.indicator.getGazeElements() or []
+  for el in gazeEls
+    if el not in els then triggerEvent 'gazeleave'
+  gazeEls = els
+  triggerEvent 'gaze'
 
 
 
@@ -105,7 +103,7 @@ document.addEventListener 'DOMContentLoaded', ->
   # Create the global Eye object.
   window.Eye =
 
-    indicator: new Indicator
+    indicator: new Indicator size: 60
 
     freeze: ->
       @frozen = true
@@ -114,10 +112,6 @@ document.addEventListener 'DOMContentLoaded', ->
       , 1500
 
     frozen: false
-
-    windowOffsetX: 0
-
-    windowOffsetY: 0
 
     handleFrame: (frame) ->
       if window.Eye.frozen then return
@@ -157,5 +151,13 @@ document.addEventListener 'DOMContentLoaded', ->
 
     connection: require './connection'
 
+    calibrate: ->
+      Eye.connection.send 'calibration:start'
+
+      for i in [1..9]
+        Eye.connection.send 'calibration:pointstart', {x: i * 5, y: i * 5}
+        Eye.connection.send 'calibration:pointend'
 
   window.Eye.connection.connect()
+
+  #Eye.calibrate()

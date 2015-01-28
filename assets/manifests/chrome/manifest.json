@@ -3,7 +3,7 @@
   "name": "Eyelluminati",
   "description": "Enable eye interactivity for the web.",
   "version": "1.0",
-  "permissions": ["tabs"],
+  "permissions": ["tabs", "http://localhost/"],
   "background": {
     "scripts": ["background.js"],
     "persistent": true
@@ -23,5 +23,6 @@
     "default_icon": "eye-128.png",
     "default_popup": "popup.html"
   },
-  "web_accessible_resources": ["eye.js"]
+  "web_accessible_resources": ["eye.js"],
+  "content_security_policy": "script-src 'self' http://localhost:3000; object-src 'self'"
 }

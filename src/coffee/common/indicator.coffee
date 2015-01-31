@@ -90,9 +90,9 @@ module.exports = class Indicator
       left:             0
       borderRadius:     '1000px'
       visibility:       visibility
-      background:       opts.color or 'rgba(255, 255, 255, 0.2)'
-      border:           '1px solid rgba(0,0,0,0.3)'
-      boxShadow:        '0 0 6px rgba(255,255,255,0.1)'
+      background:       opts.color or 'rgba(255, 255, 255, 0.4)'
+      border:           '1px solid rgba(0,0,0,0.6)'
+      boxShadow:        '0 0 6px rgba(255,255,255,0.2)'
       transform:        transform
       MozTransform:     transform
       WebkitTransform:  transform
@@ -101,6 +101,7 @@ module.exports = class Indicator
       MozTransition:    transition
       WebkitTransition: transition
       msTransition:     transition
+      opacity:          0.5
       zIndex:           100000
     for k, s of styles
       @el.style[k] = s
@@ -172,6 +173,14 @@ module.exports = class Indicator
     @size = size
     @el.style.height = size + 'px'
     @el.style.width = size + 'px'
+
+
+  ##
+  # Sets the indicator opacity.
+  # @param {number} opacity New opacity, from 0 to 100.
+
+  opacity: (op) ->
+    @el.style.opacity = +op / 100
 
 
   ##

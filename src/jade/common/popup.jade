@@ -4,7 +4,7 @@ html(lang='en')
     meta(charset='utf-8')
     meta(name='description', content='EyeJS Configuration Popup')
     meta(name='viewport', content='width=device-width, initial-scale=1')
-    //link(rel="stylesheet", href="popup.css")
+    link(rel="stylesheet", href="popup.css")
     link(href='http://fonts.googleapis.com/css?family=Open+Sans:400,300,700', rel='stylesheet', type='text/css')
     script(src='popup.js')
 
@@ -14,3 +14,6 @@ html(lang='en')
 
         label size
             input(id='size', type='range', min='10', max='200')
+
+        label opacity
+            input(id='opacity', type='range', min='0', max='100')

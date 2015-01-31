@@ -2,6 +2,7 @@ _ = require 'lodash'
 Buffer = require './buffer'
 Indicator = require './indicator'
 Interface = require './interface'
+mousetrap = require './../../lib/mousetrap/mousetrap'
 
 # List of previous eye-opens.
 opens     = new Buffer()
@@ -52,20 +53,18 @@ handleBlink = (open, close) ->
   diff = open - close
 
   if ((diff >= blinkTime - blinkCushion) && (diff <= blinkTime + blinkCushion))
-    Eye.indicator.scale(0.5, 1000)
+    Eye.indicator.scale(0.9, 300)
     Eye.freeze()
     triggerEvent 'blink'
-
 
 
 handleDoubleBlink = (open, close) ->
   diff = close - open
   if _.now() - close > 500 then return
   if (diff < 200)
-    Eye.indicator.scale 2, 1000
+    Eye.indicator.scale 1.1, 300
     Eye.freeze()
     triggerEvent 'doubleblink'
-
 
 
 handleBlinks = (frame) ->
@@ -101,6 +100,14 @@ handleGaze = ->
 
 document.addEventListener 'DOMContentLoaded', ->
 
+  Mousetrap.bind 'alt', (e) ->
+    if e.preventDefault
+      e.preventDefault()
+    else
+      e.returnValue = false
+    triggerEvent('click')
+
+
   # Create the global Eye object.
   window.Eye =
 
@@ -120,6 +127,7 @@ document.addEventListener 'DOMContentLoaded', ->
 
     disable: ->
       triggerEvent 'gazeleave'
+      gazeEls = []
       @indicator.hide()
       @enabled = false
 

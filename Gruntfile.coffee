@@ -103,7 +103,7 @@ module.exports = (grunt) ->
         options:
           loadPath: 'lib/'
         files:
-          'dist/assets/css/app.css': 'src/sass/app.sass'
+          'dist/chrome/popup.css': 'src/sass/common/popup.sass'
 
 
 
@@ -133,6 +133,7 @@ module.exports = (grunt) ->
     'clean:tmp'
     'copy'
     'jade'
+    'sass'
   ]
 
   grunt.registerTask 'test', [

@@ -3,6 +3,7 @@ chrome.tabs.query {active: true, currentWindow: true}, (tabs) ->
   tab = tabs[0]
   enabled = document.getElementById('enabled')
   size = document.getElementById('size')
+  opacity = document.getElementById('opacity')
 
   updateStatus = (status) ->
     enabled.checked = status.enabled
@@ -17,8 +18,9 @@ chrome.tabs.query {active: true, currentWindow: true}, (tabs) ->
     sendMessage m
 
   size.addEventListener 'input', ->
-    console.log this.value
     sendMessage 'eyejs:resize', this.value
 
+  opacity.addEventListener 'input', ->
+    sendMessage 'eyejs:setopacity', this.value
 
   sendMessage 'eyejs:getstatus'

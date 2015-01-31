@@ -21,7 +21,9 @@ if chrome?
       when 'eyejs:getstatus' then null
 
       when 'eyejs:resize'
-        console.log 'resizing...', +request.val
         Eye.indicator.resize +request.val
+
+      when 'eyejs:setopacity'
+        Eye.indicator.opacity +request.val
 
     sendResponse getStatus()

@@ -24,7 +24,7 @@ rightCount = 0
 triggerEvent = (event) ->
   evt = new CustomEvent event
   for el in gazeEls
-    el.dispatchEvent(evt)
+    if el isnt null then el.dispatchEvent(evt)
 
 
 handleWink = (side, el) ->

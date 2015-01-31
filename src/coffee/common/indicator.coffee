@@ -88,7 +88,7 @@ module.exports = class Indicator
       width:            @size + 'px'
       top:              0
       left:             0
-      borderRadius:     @size + 'px'
+      borderRadius:     '1000px'
       visibility:       visibility
       background:       opts.color or 'rgba(255, 255, 255, 0.2)'
       border:           '1px solid rgba(0,0,0,0.3)'
@@ -170,8 +170,8 @@ module.exports = class Indicator
 
   resize: (size) ->
     @size = size
-    @el.style.height = size
-    @el.style.width = size
+    @el.style.height = size + 'px'
+    @el.style.width = size + 'px'
 
 
   ##

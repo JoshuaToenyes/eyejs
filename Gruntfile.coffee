@@ -39,7 +39,7 @@ module.exports = (grunt) ->
       chrome:
         files:
           'dist/chrome/background.js': ['tmp/chrome/background.js']
-          'dist/chrome/foreground.js': ['tmp/chrome/foreground.js']
+          'dist/chrome/popup.js': ['tmp/chrome/popup.js']
           'dist/chrome/eye.js': ['tmp/common/**/*.js']
       test:
         files:
@@ -56,7 +56,11 @@ module.exports = (grunt) ->
       all: ['test/**/*.html']
 
     watch:
-      files: ['src/**/*.coffee', 'test/**/*.coffee'],
+      files: [
+        'src/**/*.coffee',
+        'test/**/*.coffee',
+        'src/**/*.jade',
+        'src/**/*.sass'],
       tasks: ['compile']
       configFiles:
         files: ['Gruntfile.coffee']

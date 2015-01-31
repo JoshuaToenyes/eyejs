@@ -1,6 +1,7 @@
 _ = require 'lodash'
 Buffer = require './buffer'
 Indicator = require './indicator'
+Interface = require './interface'
 
 # List of previous eye-opens.
 opens     = new Buffer()
@@ -111,10 +112,22 @@ document.addEventListener 'DOMContentLoaded', ->
         @frozen = false
       , 1500
 
+    enabled: true
+
+    enable: ->
+      @indicator.show()
+      @enabled = true
+
+    disable: ->
+      triggerEvent 'gazeleave'
+      @indicator.hide()
+      @enabled = false
+
     frozen: false
 
     handleFrame: (frame) ->
-      if window.Eye.frozen then return
+      if window.Eye.frozen or !Eye.enabled then return
+
       if lastFrame
 
         closedThisFrame = frame.avg.x == 0 and frame.avg.y == 0

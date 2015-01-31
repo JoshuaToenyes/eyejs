@@ -1,12 +1,16 @@
 doctype html
 html(lang='en')
-   title 'EyeJS'
-   meta(charset='utf-8')
-   meta(name='description', content='EyeJS Configuration Popup')
-   meta(name='viewport', content='width=device-width, initial-scale=1')
-   link(rel="stylesheet", href="/assets/css/app.css")
-   link(href='http://fonts.googleapis.com/css?family=Open+Sans:400,300,700', rel='stylesheet', type='text/css')
-   script(src='/assets/js/app.js', defer)
+    title 'EyeJS'
+    meta(charset='utf-8')
+    meta(name='description', content='EyeJS Configuration Popup')
+    meta(name='viewport', content='width=device-width, initial-scale=1')
+    //link(rel="stylesheet", href="popup.css")
+    link(href='http://fonts.googleapis.com/css?family=Open+Sans:400,300,700', rel='stylesheet', type='text/css')
+    script(src='popup.js')
 
-   body
-      | This is the popup.
+    body
+        label enabled
+            input(id='enabled', type='checkbox')
+
+        label size
+            input(id='size', type='range', min='10', max='200')

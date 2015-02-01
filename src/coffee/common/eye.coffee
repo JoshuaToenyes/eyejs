@@ -3,6 +3,7 @@ Buffer = require './buffer'
 Indicator = require './indicator'
 Interface = require './interface'
 mousetrap = require './../../lib/mousetrap/mousetrap'
+utilities = require './utilities'
 
 # List of previous eye-opens.
 opens     = new Buffer()
@@ -144,6 +145,17 @@ document.addEventListener 'DOMContentLoaded', ->
 
     frozen: false
 
+    calcScreenOffsets: ->
+      # compute width of borders
+      borderWidth = (window.outerWidth - window.innerWidth) / 2
+
+      # compute absolute page position
+      innerScreenX = window.screenX + borderWidth
+      innerScreenY = (window.outerHeight - window.innerHeight - borderWidth) + window.screenY
+
+      @innerScreenX = innerScreenX
+      @innerScreenY = innerScreenY
+
     handleFrame: (frame) ->
       if window.Eye.frozen or !Eye.enabled or !currentTab then return
 
@@ -164,17 +176,11 @@ document.addEventListener 'DOMContentLoaded', ->
       lastFrame = frame
 
       if frame.avg.x != 0 and frame.avg.y != 0
-
-        # compute width of borders
-        borderWidth = (window.outerWidth - window.innerWidth) / 2
-
-        # compute absolute page position
-        innerScreenX = window.screenX + borderWidth
-        innerScreenY = (window.outerHeight - window.innerHeight - borderWidth) + window.screenY
+        Eye.calcScreenOffsets()
 
         # Correct for window offsets.
-        frame.avg.x -= innerScreenX
-        frame.avg.y -= innerScreenY
+        frame.avg.x -= Eye.innerScreenX
+        frame.avg.y -= Eye.innerScreenY
 
         window.Eye.indicator.move frame.avg.x, frame.avg.y
 
@@ -183,12 +189,100 @@ document.addEventListener 'DOMContentLoaded', ->
 
     connection: require './connection'
 
-    calibrate: ->
-      Eye.connection.send 'calibration:start'
 
-      for i in [1..9]
-        Eye.connection.send 'calibration:pointstart', {x: i * 5, y: i * 5}
-        Eye.connection.send 'calibration:pointend'
+    ##
+    #
+
+    calibrate: ->
+      maxPointCount = 16
+      pointCount = 0
+
+      Eye.connection.send 'calibration:start', maxPointCount
+
+      indicator = @indicator
+      transition = 'all 0.5s'
+      transform = 'translate3d(-5px, -5px, 0)'
+
+      @calcScreenOffsets()
+
+      indicator.hide()
+
+      points = _.shuffle [
+        [0.1, 0.1], [0.4, 0.1], [0.6, 0.1], [0.9, 0.1]
+        [0.1, 0.4], [0.4, 0.4], [0.6, 0.4], [0.9, 0.4]
+        [0.1, 0.6], [0.4, 0.6], [0.6, 0.6], [0.9, 0.6]
+        [0.1, 0.9], [0.4, 0.9], [0.6, 0.9], [0.9, 0.9]
+      ]
+
+      curtain = utilities.makeElement 'div',
+        zIndex: 100000
+        position: 'fixed'
+        height: '100%'
+        width: '100%'
+        left: 0
+        top: 0
+        backgroundColor: 'transparent'
+        transition:       transition
+        MozTransition:    transition
+        WebkitTransition: transition
+        msTransition:     transition
+
+      point = utilities.makeElement 'div',
+        zIndex: 100001
+        position: 'fixed'
+        height: '10px'
+        width: '10px'
+        borderRadius: '999px'
+        backgroundColor: 'white'
+        left: 0
+        top: 0
+        transform:        transform
+        MozTransform:     transform
+        WebkitTransform:  transform
+        msTransform:      transform
+
+      document.body.appendChild curtain
+      document.body.appendChild point
+
+      setTimeout ->
+        curtain.style.backgroundColor = 'rgba(0,0,0,0.8)'
+      , 100
+
+
+
+      nextPoint = ->
+        #x = _.random(20, window.innerWidth - 20)
+        #y = _.random(20, window.innerHeight - 20)
+
+        x = parseInt((window.innerWidth) * points[pointCount][0])
+        y = parseInt((window.innerHeight) * points[pointCount][1])
+
+        point.style.left = x + 'px'
+        point.style.top = y + 'px'
+        Eye.connection.send 'calibration:pointstart',
+          x: x + Eye.innerScreenX
+          y: y + Eye.innerScreenY
+
+        console.log(
+          x: x + Eye.innerScreenX
+          y: y + Eye.innerScreenY)
+
+        setTimeout ->
+          Eye.connection.send 'calibration:pointend'
+          pointCount++
+          if pointCount < maxPointCount
+            nextPoint()
+          else
+            curtain.style.backgroundColor = 'transparent'
+            setTimeout ->
+              indicator.show()
+              document.body.removeChild curtain
+              document.body.removeChild point
+            , 500
+        , 2000
+
+      nextPoint()
+
 
   window.Eye.connection.connect()
 

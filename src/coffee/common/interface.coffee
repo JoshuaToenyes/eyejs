@@ -27,4 +27,7 @@ if chrome?
       when 'eyejs:setopacity'
         Eye.indicator.opacity +request.val
 
+      when 'eyejs:calibrate'
+        Eye.calibrate()
+
     sendResponse getStatus()

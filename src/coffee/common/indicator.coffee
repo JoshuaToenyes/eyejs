@@ -180,7 +180,7 @@ module.exports = class Indicator
   # @param {number} opacity New opacity, from 0 to 100.
 
   opacity: (op) ->
-    @el.style.opacity = +op / 100
+    if op? then @el.style.opacity = +op / 100 else @el.style.opacity * 100
 
 
   ##

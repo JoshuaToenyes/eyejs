@@ -24,23 +24,28 @@ rightCount = 0
 
 
 triggerEvent = (event) ->
-  evt = new CustomEvent event
-  for el in gazeEls
-    if el isnt null then el.dispatchEvent(evt)
-
+  event = event.split /\s+/
+  if event.length == 1
+    event = event[0]
+    evt = new CustomEvent event, bubbles: true, clientX: 0, clientY: 0
+    for el in gazeEls
+      if el isnt null then el.dispatchEvent(evt)
+  else
+    for e in event
+      triggerEvent e
 
 handleWink = (side, el) ->
   switch side
     when 'left'
       if ++leftCount <= 3 then return
       leftCount = 0
-      triggerEvent 'leftwink'
-      triggerEvent 'wink'
+      triggerEvent 'leftwink wink'
+      window.scrollBy(0, -100)
     when 'right'
       if ++rightCount <= 3 then return
       rightCount = 0
-      triggerEvent 'rightwink'
-      triggerEvent 'wink'
+      window.scrollBy(0, 100)
+      triggerEvent 'rightwink wink'
 
 
 handleBlink = (open, close) ->
@@ -53,18 +58,18 @@ handleBlink = (open, close) ->
   diff = open - close
 
   if ((diff >= blinkTime - blinkCushion) && (diff <= blinkTime + blinkCushion))
-    Eye.indicator.scale(0.9, 300)
+    Eye.indicator.scale(0.8, 200)
     Eye.freeze()
-    triggerEvent 'blink'
+    triggerEvent 'blink mousedown mouseup click'
 
 
 handleDoubleBlink = (open, close) ->
   diff = close - open
   if _.now() - close > 500 then return
   if (diff < 200)
-    Eye.indicator.scale 1.1, 300
+    Eye.indicator.scale(0.8, 200)
     Eye.freeze()
-    triggerEvent 'doubleblink'
+    triggerEvent 'doubleblink mousedown mouseup click'
 
 
 handleBlinks = (frame) ->
@@ -90,9 +95,10 @@ handleBlinks = (frame) ->
 handleGaze = ->
   els = window.Eye.indicator.getGazeElements() or []
   for el in gazeEls
-    if el not in els then triggerEvent 'gazeleave'
+    if el not in els
+      triggerEvent 'gazeleave mouseleave'
   gazeEls = els
-  triggerEvent 'gaze'
+  triggerEvent 'gaze mousemove mouseenter mouseover'
 
 
 
@@ -105,8 +111,13 @@ document.addEventListener 'DOMContentLoaded', ->
       e.preventDefault()
     else
       e.returnValue = false
-    triggerEvent('click')
+    triggerEvent 'mousedown mouseup click'
+    console.log gazeEls
 
+  currentTab = true
+
+  window.addEventListener 'focus', -> currentTab = true
+  window.addEventListener 'blur',  -> currentTab = false
 
   # Create the global Eye object.
   window.Eye =
@@ -117,7 +128,7 @@ document.addEventListener 'DOMContentLoaded', ->
       @frozen = true
       setTimeout =>
         @frozen = false
-      , 1500
+      , 200
 
     enabled: true
 
@@ -134,7 +145,7 @@ document.addEventListener 'DOMContentLoaded', ->
     frozen: false
 
     handleFrame: (frame) ->
-      if window.Eye.frozen or !Eye.enabled then return
+      if window.Eye.frozen or !Eye.enabled or !currentTab then return
 
       if lastFrame
 

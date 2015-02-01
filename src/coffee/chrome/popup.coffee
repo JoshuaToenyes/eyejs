@@ -8,6 +8,7 @@ chrome.tabs.query {active: true, currentWindow: true}, (tabs) ->
   updateStatus = (status) ->
     enabled.checked = status.enabled
     size.value = status.size
+    opacity.value = status.opacity
 
   sendMessage = (message, value) ->
     chrome.tabs.sendMessage tab.id, {msg: message, val: value}, (status) ->

@@ -4,6 +4,7 @@ getStatus = ->
   return {
     enabled: Eye.enabled
     size: Eye.indicator.size
+    opacity: Eye.indicator.opacity()
   }
 
 

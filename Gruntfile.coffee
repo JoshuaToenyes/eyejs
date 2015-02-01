@@ -103,7 +103,7 @@ module.exports = (grunt) ->
         options:
           loadPath: 'lib/'
         files:
-          'dist/chrome/popup.css': 'src/sass/common/popup.sass'
+          'dist/chrome/styles.css': 'src/sass/common/styles.sass'
 
 
 

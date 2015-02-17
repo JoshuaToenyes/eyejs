@@ -1,4 +1,5 @@
 .idea/
+.sass-cache/
 doc/
 node_modules/
 dist/

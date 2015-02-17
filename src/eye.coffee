@@ -15,14 +15,13 @@ closes    = new Buffer()
 lastFrame = null
 
 # Element currently gazing-at.
-gazeEls    = []
+gazeEls   = []
 
 # Number of frames the left-eye has been closed for.
 leftCount = 0
 
 # Number of frames the right-eye has been closed for.
 rightCount = 0
-
 
 triggerEvent = (event) ->
   event = event.split /\s+/
@@ -97,23 +96,12 @@ handleGaze = ->
   els = window.Eye.indicator.getGazeElements() or []
   for el in gazeEls
     if el not in els
-      triggerEvent 'gazeleave mouseleave'
+      triggerEvent 'gazeleave mouseleave mouseout'
   gazeEls = els
   triggerEvent 'gaze mousemove mouseenter mouseover'
 
 
-
-
-
 document.addEventListener 'DOMContentLoaded', ->
-
-  Mousetrap.bind 'alt', (e) ->
-    if e.preventDefault
-      e.preventDefault()
-    else
-      e.returnValue = false
-    triggerEvent 'mousedown mouseup click'
-    console.log gazeEls
 
   currentTab = true
 
@@ -262,10 +250,6 @@ document.addEventListener 'DOMContentLoaded', ->
         Eye.connection.send 'calibration:pointstart',
           x: x + Eye.innerScreenX
           y: y + Eye.innerScreenY
-
-        console.log(
-          x: x + Eye.innerScreenX
-          y: y + Eye.innerScreenY)
 
         setTimeout ->
           Eye.connection.send 'calibration:pointend'

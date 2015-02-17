@@ -71,6 +71,7 @@ module.exports = (grunt) ->
       dist: ['dist']
       tmp: ['tmp']
       test: ['test/**/*.js']
+      caches: ['.sass-cache']
 
     replace:
       version:
@@ -139,4 +140,8 @@ module.exports = (grunt) ->
   grunt.registerTask 'test', [
     'compile'
     'mocha_phantomjs'
+  ]
+
+  grunt.registerTask 'release', [
+    'test'
   ]

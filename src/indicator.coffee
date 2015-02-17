@@ -102,7 +102,7 @@ module.exports = class Indicator
       WebkitTransition: transition
       msTransition:     transition
       opacity:          0.5
-      zIndex:           100000
+      zIndex:           10000000
     for k, s of styles
       @el.style[k] = s
     document.body.appendChild(@el)

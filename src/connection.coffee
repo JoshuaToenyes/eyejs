@@ -1,7 +1,9 @@
 io = require 'socket.io-client'
 
 
-module.exports =
+module.exports = class Connection
+
+  constructor: ->
 
   connect: ->
 

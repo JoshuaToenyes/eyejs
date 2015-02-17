@@ -119,7 +119,7 @@ module.exports = class Indicator
       v = @visible()
       if v then @hide()
       counter = new ElementCounter
-      for r in [0..@size/2] by 9
+      for r in [0..(@size / 2)] by 9
         for a in [0..2] by 0.2
           px = x + r * Math.cos(a * Math.PI)
           py = y + r * Math.sin(a * Math.PI)

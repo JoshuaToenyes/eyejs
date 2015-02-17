@@ -10,18 +10,11 @@ module.exports = (grunt) ->
       app: ['src/**/*.coffee']
 
     coffee:
-      common:
+      eyejs:
         expand: true
         flatten: false
-        cwd: 'src/coffee'
-        src: ['common/**/*.coffee']
-        dest: 'tmp'
-        ext: '.js'
-      chrome:
-        expand: true
-        flatten: false
-        cwd: 'src/coffee'
-        src: ['chrome/**/*.coffee']
+        cwd: 'src'
+        src: ['*.coffee']
         dest: 'tmp'
         ext: '.js'
       test:
@@ -33,14 +26,9 @@ module.exports = (grunt) ->
         ext: '.js'
 
     browserify:
-      common:
+      eyejs:
         files:
           'dist/common/eye.js': ['tmp/common/**/*.js']
-      chrome:
-        files:
-          'dist/chrome/background.js': ['tmp/chrome/background.js']
-          'dist/chrome/popup.js': ['tmp/chrome/popup.js']
-          'dist/chrome/eye.js': ['tmp/common/**/*.js']
       test:
         files:
           'test/test.js': ['tmp/test/**/*.js']
@@ -58,9 +46,7 @@ module.exports = (grunt) ->
     watch:
       files: [
         'src/**/*.coffee',
-        'test/**/*.coffee',
-        'src/**/*.jade',
-        'src/**/*.sass'],
+        'test/**/*.coffee'],
       tasks: ['compile']
       configFiles:
         files: ['Gruntfile.coffee']
@@ -82,33 +68,6 @@ module.exports = (grunt) ->
           to: "<%= pkg.version %>"
         }]
 
-    copy:
-      chrome:
-        files: [
-          {
-            expand: true
-            flatten: true
-            src: ['assets/icons/**', 'assets/manifests/chrome/**']
-            dest: 'dist/chrome/'
-            filter: 'isFile'
-          }
-        ]
-
-    jade:
-      index:
-        files:
-          'dist/chrome/popup.html': 'src/jade/common/popup.jade'
-
-    sass:
-      dist:
-        options:
-          loadPath: 'lib/'
-        files:
-          'dist/chrome/styles.css': 'src/sass/common/styles.sass'
-
-
-
-
 
   grunt.initConfig(config)
 
@@ -121,9 +80,6 @@ module.exports = (grunt) ->
   grunt.loadNpmTasks('grunt-browserify')
   grunt.loadNpmTasks('grunt-contrib-uglify')
   grunt.loadNpmTasks('grunt-mocha-phantomjs')
-  grunt.loadNpmTasks('grunt-contrib-copy')
-  grunt.loadNpmTasks('grunt-contrib-jade')
-  grunt.loadNpmTasks('grunt-contrib-sass')
 
   grunt.registerTask 'compile', [
     'coffeelint'
@@ -132,9 +88,6 @@ module.exports = (grunt) ->
     'browserify'
     'replace:version'
     'clean:tmp'
-    'copy'
-    'jade'
-    'sass'
   ]
 
   grunt.registerTask 'test', [

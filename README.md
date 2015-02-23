@@ -26,6 +26,9 @@ second.
     {
       type: 'gaze',
 
+      // millisecond timestamp
+      timestamp: <number>,
+
       // averaged (x, y) coordinates of gaze
       avg: {
         x: <number>,

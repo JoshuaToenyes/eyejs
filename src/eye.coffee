@@ -1,9 +1,8 @@
 _ = require 'lodash'
 Buffer = require './buffer'
 Indicator = require './indicator'
-Interface = require './interface'
-utilities = require './utilities'
 connection = require './connection'
+
 
 module.exports = class Eye
 
@@ -43,7 +42,7 @@ module.exports = class Eye
     @connection.connect()
 
 
-  triggerEvent: (event) ->
+  triggerEvents: (event) ->
     event = event.split /\s+/
     if event.length == 1
       event = event[0]
@@ -52,7 +51,7 @@ module.exports = class Eye
         if el isnt null then el.dispatchEvent(evt)
     else
       for e in event
-        @triggerEvent e
+        @triggerEvents e
 
 
   handleWink: (side, el) ->
@@ -60,11 +59,11 @@ module.exports = class Eye
       when 'left'
         if ++leftCount <= 3 then return
         leftCount = 0
-        @triggerEvent 'leftwink wink'
+        @triggerEvents 'leftwink wink'
       when 'right'
         if ++rightCount <= 3 then return
         rightCount = 0
-        @triggerEvent 'rightwink wink'
+        @triggerEvents 'rightwink wink'
 
 
   handleBlink: (open, close) ->
@@ -79,7 +78,7 @@ module.exports = class Eye
     if ((diff >= blinkTime - cushion) && (diff <= blinkTime + cushion))
       @indicator.scale(0.8, 200)
       @freeze()
-      @triggerEvent 'blink mousedown mouseup click'
+      @triggerEvents 'blink mousedown mouseup click'
 
 
   handleDoubleBlink: (open, close) ->
@@ -88,7 +87,7 @@ module.exports = class Eye
     if (diff < 200)
       @indicator.scale(0.8, 200)
       @freeze()
-      @triggerEvent 'doubleblink mousedown mouseup click'
+      @triggerEvents 'doubleblink mousedown mouseup click'
 
 
   handleBlinks = (frame) ->
@@ -115,9 +114,9 @@ module.exports = class Eye
     els = @indicator.getGazeElements() or []
     for el in @gazeEls
       if el not in els
-        @triggerEvent 'gazeleave mouseleave mouseout'
+        @triggerEvents 'gazeleave mouseleave mouseout'
     @gazeEls = els
-    @triggerEvent 'gaze mousemove mouseenter mouseover'
+    @triggerEvents 'gaze mousemove mouseenter mouseover'
 
   freeze: ->
     @frozen = true
@@ -130,11 +129,16 @@ module.exports = class Eye
     @enabled = true
 
   disable: ->
-    @triggerEvent 'gazeleave'
+    @triggerEvents 'gazeleave'
     @gazeEls = []
     @indicator.hide()
     @enabled = false
 
+  ##
+  # Calculates the positional offsets of the browser window relative to the
+  # screen.
+  #
+  # @todo This should use a click event, or perhaps be delegated to the clients.
   calcScreenOffsets: ->
     # compute width of borders
     borderWidth = (window.outerWidth - window.innerWidth) / 2
@@ -148,8 +152,11 @@ module.exports = class Eye
     @innerScreenY = innerScreenY
 
 
+  ##
+  # @todo This method should use the timestamp on the frame, not a new Date
+  # object when pushing opens and closes.
   handleFrame: (frame) ->
-    if window.Eye.frozen or !Eye.enabled or !windowActive then return
+    if @frozen or !@enabled or !@windowActive then return
 
     if @lastFrame
 
@@ -160,10 +167,10 @@ module.exports = class Eye
       openThisFrame   = frame.avg.x != 0 and frame.avg.y != 0
 
       if closedThisFrame and openLastFrame
-        closes.push(new Date());
+        @closes.push(new Date());
 
       if closedLastFrame and openThisFrame
-        opens.push(new Date());
+        @opens.push(new Date());
 
     @lastFrame = frame
 
@@ -171,91 +178,10 @@ module.exports = class Eye
       @calcScreenOffsets()
 
       # Correct for window offsets.
-      frame.avg.x -= Eye.innerScreenX
-      frame.avg.y -= Eye.innerScreenY
+      frame.avg.x -= @innerScreenX
+      frame.avg.y -= @innerScreenY
 
       @indicator.move frame.avg.x, frame.avg.y
 
       @handleGaze()
       @handleBlinks(frame)
-
-  calibrate: ->
-    maxPointCount = 16
-    pointCount = 0
-
-    @connection.send 'calibration:start', maxPointCount
-
-    indicator = @indicator
-    transition = 'all 0.5s'
-    transform = 'translate3d(-5px, -5px, 0)'
-
-    @calcScreenOffsets()
-
-    @indicator.hide()
-
-    points = _.shuffle [
-      [0.1, 0.1], [0.4, 0.1], [0.6, 0.1], [0.9, 0.1]
-      [0.1, 0.4], [0.4, 0.4], [0.6, 0.4], [0.9, 0.4]
-      [0.1, 0.6], [0.4, 0.6], [0.6, 0.6], [0.9, 0.6]
-      [0.1, 0.9], [0.4, 0.9], [0.6, 0.9], [0.9, 0.9]
-    ]
-
-    curtain = utilities.makeElement 'div',
-      zIndex: 100000
-      position: 'fixed'
-      height: '100%'
-      width: '100%'
-      left: 0
-      top: 0
-      backgroundColor: 'transparent'
-      transition:       transition
-      MozTransition:    transition
-      WebkitTransition: transition
-      msTransition:     transition
-
-    point = utilities.makeElement 'div',
-      zIndex: 100001
-      position: 'fixed'
-      height: '10px'
-      width: '10px'
-      borderRadius: '999px'
-      backgroundColor: 'white'
-      left: 0
-      top: 0
-      transform:        transform
-      MozTransform:     transform
-      WebkitTransform:  transform
-      msTransform:      transform
-
-    document.body.appendChild curtain
-    document.body.appendChild point
-
-    setTimeout ->
-      curtain.style.backgroundColor = 'rgba(0,0,0,0.8)'
-    , 100
-
-    nextPoint = ->
-      x = parseInt((window.innerWidth) * points[pointCount][0])
-      y = parseInt((window.innerHeight) * points[pointCount][1])
-
-      point.style.left = x + 'px'
-      point.style.top = y + 'px'
-      Eye.connection.send 'calibration:pointstart',
-        x: x + Eye.innerScreenX
-        y: y + Eye.innerScreenY
-
-      setTimeout ->
-        Eye.connection.send 'calibration:pointend'
-        pointCount++
-        if pointCount < maxPointCount
-          nextPoint()
-        else
-          curtain.style.backgroundColor = 'transparent'
-          setTimeout ->
-            indicator.show()
-            document.body.removeChild curtain
-            document.body.removeChild point
-          , 500
-      , 2000
-
-    nextPoint()

@@ -15,7 +15,7 @@ module.exports = (grunt) ->
         flatten: false
         cwd: 'src'
         src: ['*.coffee']
-        dest: 'tmp'
+        dest: 'dist'
         ext: '.js'
       test:
         expand: true,
@@ -28,7 +28,7 @@ module.exports = (grunt) ->
     browserify:
       eyejs:
         files:
-          'dist/common/eye.js': ['tmp/common/**/*.js']
+          'dist/eyejs.js': ['tmp/**/*.js']
       test:
         files:
           'test/test.js': ['tmp/test/**/*.js']
@@ -85,7 +85,6 @@ module.exports = (grunt) ->
     'coffeelint'
     'clean:dist'
     'coffee'
-    'browserify'
     'replace:version'
     'clean:tmp'
   ]

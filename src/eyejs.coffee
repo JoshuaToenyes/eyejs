@@ -1,12 +1,20 @@
-_ = require 'lodash'
-Buffer = require './buffer'
-Indicator = require './indicator'
-connection = require './connection'
+##
+# Defines
+
+_           = require 'lodash'
+Buffer      = require './Buffer'
+Indicator   = require './Indicator'
+Connection  = require './Connection'
 
 
-module.exports = class Eye
+##
+# The EyeJS class.
+#
+# @class EyeJS
 
-  constructor: ->
+module.exports = class EyeJS
+
+  constructor: (opts = {}) ->
 
     # List of previous eye-opens.
     @opens = new Buffer()
@@ -38,6 +46,8 @@ module.exports = class Eye
 
     window.addEventListener 'focus', -> windowActive = true
     window.addEventListener 'blur',  -> windowActive = false
+
+    @connection.on 'gaze', @handleFrame
 
     @connection.connect()
 

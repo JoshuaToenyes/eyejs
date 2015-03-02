@@ -3,6 +3,7 @@
   "description": "Add eye tracking interactivity to the web and Node.js platforms.",
   "author": "Joshua Toenyes <joshua.toenyes@me.com>",
   "version": "0.0.1-beta.1",
+  "main": "dist/eyejs.js",
   "dependencies": {
     "socket.io-client": "1.3.x",
     "lodash": "3.2.x"

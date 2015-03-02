@@ -105,7 +105,10 @@ module.exports = class Indicator
       zIndex:           10000000
     for k, s of styles
       @el.style[k] = s
-    document.body.appendChild(@el)
+
+    # Add the indicator when the window has loaded.
+    document.addEventListener 'DOMContentLoaded', ->
+      document.body.appendChild(@el)
 
     ##
     # Gets and returns a list of element currently under the gaze indicator.

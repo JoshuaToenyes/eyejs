@@ -6,6 +6,7 @@ Buffer      = require './Buffer'
 Indicator   = require './Indicator'
 Connection  = require './Connection'
 
+xx = 0
 
 ##
 # The EyeJS class.
@@ -47,7 +48,7 @@ module.exports = class EyeJS
     window.addEventListener 'focus', -> windowActive = true
     window.addEventListener 'blur',  -> windowActive = false
 
-    @connection.on 'gaze', @handleFrame
+    @connection.on 'gaze', (e) => @handleFrame(e)
 
     @connection.connect()
 
@@ -187,11 +188,14 @@ module.exports = class EyeJS
     if frame.avg.x != 0 and frame.avg.y != 0
       @calcScreenOffsets()
 
+      frame.avg.x /= window.devicePixelRatio
+      frame.avg.y /= window.devicePixelRatio
+
       # Correct for window offsets.
       frame.avg.x -= @innerScreenX
       frame.avg.y -= @innerScreenY
 
       @indicator.move frame.avg.x, frame.avg.y
 
-      @handleGaze()
-      @handleBlinks(frame)
+      #@handleGaze()
+      #@handleBlinks(frame)

@@ -16,13 +16,21 @@ module.exports = class Connection extends EventEmitter
 
     @ws = new WebSocket url
 
-    @ws.onMessage = @handleMessage
+    @ws.onmessage = (e) => @handleMessage(e)
 
 
   send: (e, m) ->
     @socket.send(e, m)
 
 
+  ##
+  # Handles incomming messages from the EyeJS WebSocket server (which provides
+  # eye-tracking data).
   handleMessage: (e) ->
-    switch e.type
-      when 'frame' then @emit(frame, e)
+    try
+      msg = JSON.parse(e.data)
+      switch msg.type
+        when 'gaze'
+          @emit('gaze', msg)
+    catch err
+      console.error 'Failed to parse message data from WebSocket server.'

@@ -64,13 +64,16 @@ module.exports = class Indicator
 
   constructor: (opts = {}) ->
 
+    tfunc = 'cubic-bezier(0.900, 0.000, 1.000, 1.000)'
+    t = '50ms'
+
     transform  = opts.transform  or 'translate3d(0, 0, 0)'
-    transition = opts.transition or '-webkit-transform 0.2s ease-out,
-      -moz-transform 0.2s ease-out,
-      -ms-transform 0.2s ease-out,
-      transform 0.2s ease-out,
+    transition = opts.transition or "-webkit-transform #{t} #{tfunc},
+      -moz-transform #{t} #{tfunc},
+      -ms-transform #{t} #{tfunc},
+      transform #{t} #{tfunc},
       height 1s ease-out,
-      width 1s ease-out'
+      width 1s ease-out"
 
     if opts.visible?
       visibility = opts.visible ? 'visible' : 'hidden'
@@ -107,7 +110,7 @@ module.exports = class Indicator
       @el.style[k] = s
 
     # Add the indicator when the window has loaded.
-    document.addEventListener 'DOMContentLoaded', ->
+    document.addEventListener 'DOMContentLoaded', =>
       document.body.appendChild(@el)
 
     ##
@@ -152,7 +155,9 @@ module.exports = class Indicator
 
   move: (x, y) ->
     h = 0.5 * @size
-    @push 'translate', "#{+x - h}px, #{+y - h}px"
+    x = parseInt(+x - h)
+    y = parseInt(+y - h)
+    @push 'translate', "#{x}px, #{y}px"
 
 
   ##

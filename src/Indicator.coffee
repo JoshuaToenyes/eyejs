@@ -38,6 +38,8 @@ class ElementCounter
     for el in @elements
       if el.hasAttribute('data-eyejs-snap')
         return el
+      if el.tagName is 'A'
+        return el
     for c, i in @counts
       if c > m
         idx = i
@@ -64,8 +66,8 @@ module.exports = class Indicator
 
   constructor: (opts = {}) ->
 
-    tfunc = 'cubic-bezier(0.900, 0.000, 1.000, 1.000)'
-    t = '50ms'
+    tfunc = 'ease-in' #'cubic-bezier(0.900, 0.000, 1.000, 1.000)'
+    t = '40ms'
 
     transform  = opts.transform  or 'translate3d(0, 0, 0)'
     transition = opts.transition or "-webkit-transform #{t} #{tfunc},
@@ -76,7 +78,7 @@ module.exports = class Indicator
       width 1s ease-out"
 
     if opts.visible?
-      visibility = opts.visible ? 'visible' : 'hidden'
+      visibility = if opts.visible then 'visible' else 'hidden'
     else
       visibility = 'visible'
 
@@ -85,6 +87,7 @@ module.exports = class Indicator
     @scaleTimer = null
 
     @el = document.createElement('div')
+
     styles =
       position:         'fixed'
       height:           @size + 'px'

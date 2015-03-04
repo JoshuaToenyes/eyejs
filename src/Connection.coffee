@@ -29,8 +29,9 @@ module.exports = class Connection extends EventEmitter
   handleMessage: (e) ->
     try
       msg = JSON.parse(e.data)
-      switch msg.type
-        when 'gaze'
-          @emit('gaze', msg)
     catch err
       console.error 'Failed to parse message data from WebSocket server.'
+      return
+    switch msg.type
+      when 'gaze'
+        @emit('gaze', msg)

@@ -6,7 +6,7 @@ Buffer      = require './Buffer'
 Indicator   = require './Indicator'
 Connection  = require './Connection'
 
-xx = 0
+
 
 ##
 # The EyeJS class.
@@ -37,7 +37,7 @@ module.exports = class EyeJS
 
     @windowActive = true
 
-    @indicator = new Indicator size: 60, visible: false
+    @indicator = new Indicator size: 60, visible: true
 
     @frozen = false
 
@@ -58,7 +58,7 @@ module.exports = class EyeJS
     if event.length == 1
       event = event[0]
       evt = new CustomEvent event, bubbles: true, clientX: 0, clientY: 0
-      for el in gazeEls
+      for el in @gazeEls
         if el isnt null then el.dispatchEvent(evt)
     else
       for e in event
@@ -101,30 +101,39 @@ module.exports = class EyeJS
       @triggerEvents 'doubleblink mousedown mouseup click'
 
 
-  handleBlinks = (frame) ->
+  handleBlinks: (frame) ->
     open  = @opens.get 0
     close = @closes.get 0
     dOpen = @opens.get 1
-    left  = frame.lefteye.avg
-    right = frame.righteye.avg
+    left  = frame.left.avg
+    right = frame.right.avg
 
     if (open  && close) then @handleBlink open, close
     if (dOpen && close) then @handleDoubleBlink dOpen, close
 
-    if ((left.x == 0 && left.y == 0) && (right.x != 0 && right.y != 0))
-      @handleWink 'left'
-
-    if ((left.x != 0 && left.y != 0) && (right.x == 0 && right.y == 0))
-      @handleWink 'right'
+    # if ((left.x == 0 && left.y == 0) && (right.x != 0 && right.y != 0))
+    #   @handleWink 'left'
+    #
+    # if ((left.x != 0 && left.y != 0) && (right.x == 0 && right.y == 0))
+    #   @handleWink 'right'
 
 
   # Handles gaze event. If the current gaze element is unchanged, then
   # do nothing... but if it has changed, trigger a gazeleave on previous and
   # a gaze on the new one.
-  handleGaze = ->
+  handleGaze: ->
     els = @indicator.getGazeElements() or []
+    for el in els
+      if el and el.tagName is 'A'
+        el.style.display = 'inline-block'
+        el.style.webkitTransform = 'scale(1.2)'
+        el.style.boxShadow = '0 0 8px black'
+        el.style.backgroundColor = 'white'
     for el in @gazeEls
-      if el not in els
+      if el and el not in els
+        el.style.webkitTransform = ''
+        el.style.boxShadow = ''
+        el.style.backgroundColor = ''
         @triggerEvents 'gazeleave mouseleave mouseout'
     @gazeEls = els
     @triggerEvents 'gaze mousemove mouseenter mouseover'
@@ -197,5 +206,5 @@ module.exports = class EyeJS
 
       @indicator.move frame.avg.x, frame.avg.y
 
-      #@handleGaze()
-      #@handleBlinks(frame)
+      @handleGaze()
+      @handleBlinks(frame)

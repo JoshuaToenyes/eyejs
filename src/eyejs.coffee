@@ -3,10 +3,15 @@
 
 _           = require 'lodash'
 Buffer      = require './Buffer'
+SmoothingBuffer = require './SmoothingBuffer'
 Indicator   = require './Indicator'
 Connection  = require './Connection'
 
+S_ALPHA = 0.1
 
+S_WINDOW = 20
+
+S_MIN = 0.8
 
 ##
 # The EyeJS class.
@@ -16,6 +21,10 @@ Connection  = require './Connection'
 module.exports = class EyeJS
 
   constructor: (opts = {}) ->
+
+    @smoothedX = new SmoothingBuffer(S_WINDOW, S_ALPHA, S_MIN)
+
+    @smoothedY = new SmoothingBuffer(S_WINDOW, S_ALPHA, S_MIN)
 
     # List of previous eye-opens.
     @opens = new Buffer()
@@ -204,7 +213,12 @@ module.exports = class EyeJS
       frame.avg.x -= @innerScreenX
       frame.avg.y -= @innerScreenY
 
-      @indicator.move frame.avg.x, frame.avg.y
+      @smoothedX.push frame.avg.x
+      @smoothedY.push frame.avg.y
+
+      #console.log frame.avg.x, @smoothedX.top()
+
+      @indicator.move @smoothedX.top(), @smoothedY.top()
 
       @handleGaze()
       @handleBlinks(frame)

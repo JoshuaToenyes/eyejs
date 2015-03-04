@@ -67,13 +67,10 @@ module.exports = class Indicator
   constructor: (opts = {}) ->
 
     tfunc = 'ease-in' #'cubic-bezier(0.900, 0.000, 1.000, 1.000)'
-    t = '40ms'
+    t = '10ms'
 
     transform  = opts.transform  or 'translate3d(0, 0, 0)'
-    transition = opts.transition or "-webkit-transform #{t} #{tfunc},
-      -moz-transform #{t} #{tfunc},
-      -ms-transform #{t} #{tfunc},
-      transform #{t} #{tfunc},
+    transition = opts.transition or "
       height 1s ease-out,
       width 1s ease-out"
 

@@ -35,11 +35,29 @@ class ElementCounter
   max: ->
     m = 0
     idx = null
+
+    # First, look for elements with the data-eyejs-snap property. If any are
+    # found, these should be returned with the highest priority.
     for el in @elements
       if el.hasAttribute('data-eyejs-snap')
         return el
-      if el.tagName is 'A'
+
+    # Next, if an anchor tag is found, return it with the second-highest
+    # priority.
+    for el in @elements
+      if el.tagName is 'A' or el.tagName is 'IMG'
         return el
+
+    # Lastly, iterate up the DOM and look for an anchor tag parent. If one is
+    # found, return it.
+    for el in @elements
+      p = el
+      while (p = p.parentNode) isnt document.body and p isnt null
+        if p.tagName is 'A' or el.tagName is 'IMG'
+          return p
+
+    # If none of the above conditions are found, then return the element with
+    # the most number of intersection point counts.
     for c, i in @counts
       if c > m
         idx = i

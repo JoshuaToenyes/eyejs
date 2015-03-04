@@ -7,11 +7,11 @@ SmoothingBuffer = require './SmoothingBuffer'
 Indicator   = require './Indicator'
 Connection  = require './Connection'
 
-S_ALPHA = 0.1
+S_ALPHA = 0.2
 
 S_WINDOW = 20
 
-S_MIN = 0.8
+S_MIN = 1.2
 
 ##
 # The EyeJS class.
@@ -54,8 +54,9 @@ module.exports = class EyeJS
 
     @connection = new Connection()
 
-    window.addEventListener 'focus', -> windowActive = true
-    window.addEventListener 'blur',  -> windowActive = false
+    window.addEventListener 'pageshow', => @windowActive = true
+
+    window.addEventListener 'pagehide', => @windowActive = false
 
     @connection.on 'gaze', (e) => @handleFrame(e)
 
@@ -132,17 +133,23 @@ module.exports = class EyeJS
   # a gaze on the new one.
   handleGaze: ->
     els = @indicator.getGazeElements() or []
+
+    # @todo The getGazeElements really should just return one element.
+
     for el in els
-      if el and el.tagName is 'A'
-        el.style.display = 'inline-block'
-        el.style.webkitTransform = 'scale(1.2)'
-        el.style.boxShadow = '0 0 8px black'
-        el.style.backgroundColor = 'white'
+      if el is null then continue
+      el.setAttribute 'eyejs-gaze', ''
+      #if el and el.tagName is 'A'
+        # el.style.display = 'inline-block'
+        # el.style.webkitTransform = 'scale(1.1)'
+        # el.style.boxShadow = '0 0 8px black'
+        # el.style.backgroundColor = 'white'
     for el in @gazeEls
       if el and el not in els
-        el.style.webkitTransform = ''
-        el.style.boxShadow = ''
-        el.style.backgroundColor = ''
+        el.removeAttribute 'eyejs-gaze'
+        # el.style.webkitTransform = ''
+        # el.style.boxShadow = ''
+        # el.style.backgroundColor = ''
         @triggerEvents 'gazeleave mouseleave mouseout'
     @gazeEls = els
     @triggerEvents 'gaze mousemove mouseenter mouseover'

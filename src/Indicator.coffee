@@ -56,6 +56,9 @@ class ElementCounter
         if p.tagName is 'A' or el.tagName is 'IMG'
           return p
 
+    # TEMPORARY: Only returning null here to make anchor sticky.
+    return null
+
     # If none of the above conditions are found, then return the element with
     # the most number of intersection point counts.
     for c, i in @counts
@@ -135,10 +138,10 @@ module.exports = class Indicator
     # Gets and returns a list of element currently under the gaze indicator.
     # This method is throttled and is only effectively called once every 100
     # milliseconds.
-    # @method getGazeElements
+    # @method getGazeElement
     # @returns {Array<HTMLElement>}
 
-    @getGazeElements = _.throttle =>
+    @getGazeElement = _.throttle =>
       [x, y] = @center()
       v = @visible()
       if v then @hide()
@@ -150,7 +153,7 @@ module.exports = class Indicator
           el = document.elementFromPoint px, py
           counter.increment el
       if v then @show()
-      [counter.max()]
+      counter.max()
     , 100
 
 

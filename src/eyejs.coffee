@@ -133,26 +133,18 @@ module.exports = class EyeJS extends EventEmitter
   # do nothing... but if it has changed, trigger a gazeleave on previous and
   # a gaze on the new one.
   handleGaze: ->
-    els = @indicator.getGazeElements() or []
+    el = @indicator.getGazeElement()
 
-    # @todo The getGazeElements really should just return one element.
+    if el is null then return
 
-    for el in els
-      if el is null then continue
-      el.setAttribute 'eyejs-gaze', ''
-      #if el and el.tagName is 'A'
-        # el.style.display = 'inline-block'
-        # el.style.webkitTransform = 'scale(1.1)'
-        # el.style.boxShadow = '0 0 8px black'
-        # el.style.backgroundColor = 'white'
-    for el in @gazeEls
-      if el and el not in els
-        el.removeAttribute 'eyejs-gaze'
-        # el.style.webkitTransform = ''
-        # el.style.boxShadow = ''
-        # el.style.backgroundColor = ''
+    el.setAttribute 'eyejs-gaze', ''
+
+    for ge in @gazeEls
+      if ge and ge isnt el
+        ge.removeAttribute 'eyejs-gaze'
         @triggerEvents 'gazeleave mouseleave mouseout'
-    @gazeEls = els
+
+    @gazeEls = [el]
     @triggerEvents 'gaze mousemove mouseenter mouseover'
 
   freeze: ->

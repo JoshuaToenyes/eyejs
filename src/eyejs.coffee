@@ -98,6 +98,7 @@ module.exports = class EyeJS extends EventEmitter
     diff = open - close
 
     if ((diff >= blinkTime - cushion) && (diff <= blinkTime + cushion))
+      console.log 'BLINK!!!!'
       @indicator.scale(0.8, 200)
       @freeze()
       @triggerEvents 'blink mousedown mouseup click'
@@ -109,7 +110,7 @@ module.exports = class EyeJS extends EventEmitter
     if (diff < 200)
       @indicator.scale(0.8, 200)
       @freeze()
-      @triggerEvents 'doubleblink mousedown mouseup click'
+      #@triggerEvents 'doubleblink mousedown mouseup click'
 
 
   handleBlinks: (frame) ->
@@ -119,7 +120,7 @@ module.exports = class EyeJS extends EventEmitter
     left  = frame.left.avg
     right = frame.right.avg
 
-    if (open  && close) then @handleBlink open, close
+    if (open && close) then @handleBlink open, close
     if (dOpen && close) then @handleDoubleBlink dOpen, close
 
     # if ((left.x == 0 && left.y == 0) && (right.x != 0 && right.y != 0))
@@ -189,11 +190,11 @@ module.exports = class EyeJS extends EventEmitter
 
     if @lastFrame
 
-      closedThisFrame = frame.avg.x == 0 and frame.avg.y == 0
-      openLastFrame   = @lastFrame.avg.x != 0 and @lastFrame.avg.y != 0
+      closedThisFrame = !frame.available.both
+      openLastFrame   = @lastFrame.available.both
 
-      closedLastFrame = @lastFrame.avg.x == 0 and @lastFrame.avg.y == 0
-      openThisFrame   = frame.avg.x != 0 and frame.avg.y != 0
+      closedLastFrame = !@lastFrame.available.both
+      openThisFrame   = frame.available.both
 
       if closedThisFrame and openLastFrame
         @closes.push(new Date());
@@ -223,6 +224,8 @@ module.exports = class EyeJS extends EventEmitter
         y:    @smoothedY.top()
 
       @emit 'gaze', e
+
+      @emit 'raw', frame
 
       @indicator.move @smoothedX.top(), @smoothedY.top()
 

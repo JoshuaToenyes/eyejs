@@ -6,6 +6,7 @@ Buffer      = require './Buffer'
 SmoothingBuffer = require './SmoothingBuffer'
 Indicator   = require './Indicator'
 Connection  = require './Connection'
+EventEmitter = (require 'events').EventEmitter
 
 S_ALPHA = 0.2
 
@@ -18,7 +19,7 @@ S_MIN = 1.2
 #
 # @class EyeJS
 
-module.exports = class EyeJS
+module.exports = class EyeJS extends EventEmitter
 
   constructor: (opts = {}) ->
 
@@ -223,7 +224,13 @@ module.exports = class EyeJS
       @smoothedX.push frame.avg.x
       @smoothedY.push frame.avg.y
 
-      #console.log frame.avg.x, @smoothedX.top()
+      e =
+        rawx: frame.avg.x
+        rawy: frame.avg.y
+        x:    @smoothedX.top()
+        y:    @smoothedY.top()
+
+      @emit 'gaze', e
 
       @indicator.move @smoothedX.top(), @smoothedY.top()
 

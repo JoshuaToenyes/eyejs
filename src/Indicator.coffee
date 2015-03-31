@@ -56,9 +56,6 @@ class ElementCounter
         if p.tagName is 'A' or el.tagName is 'IMG'
           return p
 
-    # TEMPORARY: Only returning null here to make anchor sticky.
-    return null
-
     # If none of the above conditions are found, then return the element with
     # the most number of intersection point counts.
     for c, i in @counts

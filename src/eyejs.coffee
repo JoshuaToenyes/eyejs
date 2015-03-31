@@ -7,12 +7,21 @@ SmoothingBuffer = require './SmoothingBuffer'
 Indicator   = require './Indicator'
 Connection  = require './Connection'
 EventEmitter = (require 'events').EventEmitter
+BlinkController = require './BlinkController'
 
-S_ALPHA = 0.2
+S_ALPHA = 0.08
 
 S_WINDOW = 20
 
 S_MIN = 1.2
+
+##
+# The amount of time to wait until we assume the user has closed thier eyes
+# or is no-longer looking at the screen.
+#
+# @const FRAME_TIMEOUT
+
+FRAME_TIMEOUT = 400
 
 ##
 # The EyeJS class.
@@ -26,6 +35,14 @@ module.exports = class EyeJS extends EventEmitter
     @smoothedX = new SmoothingBuffer(S_WINDOW, S_ALPHA, S_MIN)
 
     @smoothedY = new SmoothingBuffer(S_WINDOW, S_ALPHA, S_MIN)
+
+    @blinks = new BlinkController
+
+    @blinks.on 'open', =>
+      @triggerEvents 'eyesopen'
+
+    @blinks.on 'close', =>
+      @triggerEvents 'eyesclose'
 
     # List of previous eye-opens.
     @opens = new Buffer()
@@ -62,6 +79,11 @@ module.exports = class EyeJS extends EventEmitter
     @connection.on 'gaze', (e) => @handleFrame(e)
 
     @connection.connect()
+
+    @frameWatcher = setInterval =>
+      if _.now() - @lastFrame.timestamp > FRAME_TIMEOUT
+        @blinks.pushClose()
+    , 100
 
 
   triggerEvents: (event) ->
@@ -121,7 +143,7 @@ module.exports = class EyeJS extends EventEmitter
     right = frame.right.avg
 
     if (open && close) then @handleBlink open, close
-    if (dOpen && close) then @handleDoubleBlink dOpen, close
+    #if (dOpen && close) then @handleDoubleBlink dOpen, close
 
     # if ((left.x == 0 && left.y == 0) && (right.x != 0 && right.y != 0))
     #   @handleWink 'left'
@@ -135,8 +157,6 @@ module.exports = class EyeJS extends EventEmitter
   # a gaze on the new one.
   handleGaze: ->
     el = @indicator.getGazeElement()
-
-    if el is null then return
 
     el.setAttribute 'eyejs-gaze', ''
 
@@ -188,19 +208,8 @@ module.exports = class EyeJS extends EventEmitter
   handleFrame: (frame) ->
     if @frozen or !@enabled or !@windowActive then return
 
-    if @lastFrame
-
-      closedThisFrame = !frame.available.both
-      openLastFrame   = @lastFrame.available.both
-
-      closedLastFrame = !@lastFrame.available.both
-      openThisFrame   = frame.available.both
-
-      if closedThisFrame and openLastFrame
-        @closes.push(new Date());
-
-      if closedLastFrame and openThisFrame
-        @opens.push(new Date());
+    if not frame.available.both then @blinks.pushClose()
+    if frame.available.both then @blinks.pushOpen()
 
     @lastFrame = frame
 

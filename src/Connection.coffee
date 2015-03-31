@@ -1,5 +1,7 @@
 EventEmitter = (require 'events').EventEmitter
 
+
+
 module.exports = class Connection extends EventEmitter
 
   constructor: (@opts = {}) ->
@@ -29,9 +31,11 @@ module.exports = class Connection extends EventEmitter
   handleMessage: (e) ->
     try
       msg = JSON.parse(e.data)
+      msg.timestamp = new Date()
     catch err
       console.error 'Failed to parse message data from WebSocket server.'
       return
+
     switch msg.type
       when 'gaze'
         @emit('gaze', msg)

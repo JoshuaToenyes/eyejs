@@ -44,23 +44,11 @@ module.exports = class EyeJS extends EventEmitter
     @blinks.on 'close', =>
       @triggerEvents 'eyesclose'
 
-    # List of previous eye-opens.
-    @opens = new Buffer()
-
-    # List of previous eye-closes.
-    @closes = new Buffer()
-
     # The last frame received.
     @lastFrame = null
 
     # Element currently gazing-at.
-    @gazeEls = []
-
-    # Number of frames the left-eye has been closed for.
-    @leftCount = 0
-
-    # Number of frames the right-eye has been closed for.
-    @rightCount = 0
+    @gazeEl = null
 
     @windowActive = true
 
@@ -85,88 +73,53 @@ module.exports = class EyeJS extends EventEmitter
         @blinks.pushClose()
     , 100
 
+  ##
+  # This method triggers space-separated event names on the current gaze
+  # element.
+  #
+  # @method triggerEvents
+  # @public
 
   triggerEvents: (event) ->
     event = event.split /\s+/
     if event.length == 1
       event = event[0]
       evt = new CustomEvent event, bubbles: true, clientX: 0, clientY: 0
-      for el in @gazeEls
-        if el isnt null then el.dispatchEvent(evt)
+      if @gazeEl isnt null then @gazeEl.dispatchEvent(evt)
     else
       for e in event
         @triggerEvents e
 
-
-  handleWink: (side, el) ->
-    switch side
-      when 'left'
-        if ++leftCount <= 3 then return
-        leftCount = 0
-        @triggerEvents 'leftwink wink'
-      when 'right'
-        if ++rightCount <= 3 then return
-        rightCount = 0
-        @triggerEvents 'rightwink wink'
-
-
-  handleBlink: (open, close) ->
-    blinkTime = 600
-    cushion = 200
-
-    # if the last open isn't recent, then skip.
-    if _.now() - open > 100 then return
-
-    diff = open - close
-
-    if ((diff >= blinkTime - cushion) && (diff <= blinkTime + cushion))
-      console.log 'BLINK!!!!'
-      @indicator.scale(0.8, 200)
-      @freeze()
-      @triggerEvents 'blink mousedown mouseup click'
-
-
-  handleDoubleBlink: (open, close) ->
-    diff = close - open
-    if _.now() - close > 500 then return
-    if (diff < 200)
-      @indicator.scale(0.8, 200)
-      @freeze()
-      #@triggerEvents 'doubleblink mousedown mouseup click'
-
-
-  handleBlinks: (frame) ->
-    open  = @opens.get 0
-    close = @closes.get 0
-    dOpen = @opens.get 1
-    left  = frame.left.avg
-    right = frame.right.avg
-
-    if (open && close) then @handleBlink open, close
-    #if (dOpen && close) then @handleDoubleBlink dOpen, close
-
-    # if ((left.x == 0 && left.y == 0) && (right.x != 0 && right.y != 0))
-    #   @handleWink 'left'
-    #
-    # if ((left.x != 0 && left.y != 0) && (right.x == 0 && right.y == 0))
-    #   @handleWink 'right'
-
-
+  ##
   # Handles gaze event. If the current gaze element is unchanged, then
   # do nothing... but if it has changed, trigger a gazeleave on previous and
   # a gaze on the new one.
+  #
+  # This method is only called if there are useful coordinates to work with.
+  # So for instance, the frame handler will only call this function if there
+  # are non-zero coordinates. Therefore, it won't get called if the eyes are
+  # closed or otherwise off screen.
+
   handleGaze: ->
+
+    # Get the element currently under the gaze indicator.
     el = @indicator.getGazeElement()
 
-    el.setAttribute 'eyejs-gaze', ''
-
-    for ge in @gazeEls
-      if ge and ge isnt el
-        ge.removeAttribute 'eyejs-gaze'
+    # If there is an element... (there may not be if the user isn't looking
+    # inside the browser window).
+    if el
+      el.setAttribute 'eyejs-gaze', ''
+      if @gazeEl and @gazeEl isnt el
+        @gazeEl.removeAttribute 'eyejs-gaze'
         @triggerEvents 'gazeleave mouseleave mouseout'
+      @gazeEl = el
+      @triggerEvents 'gaze mousemove mouseenter mouseover'
+    else
+      @gazeEl = null
 
-    @gazeEls = [el]
-    @triggerEvents 'gaze mousemove mouseenter mouseover'
+
+  ##
+  #
 
   freeze: ->
     @frozen = true
@@ -174,37 +127,64 @@ module.exports = class EyeJS extends EventEmitter
       @frozen = false
     , 200
 
+
+  ##
+  # Enables EyeJS and shows the indicator.
+  #
+  # @method enable
+  # @public
+
   enable: ->
     @indicator.show()
     @enabled = true
 
+
+  ##
+  # Disables the EyeJS, hides the indicator, and triggers a `gazeleave` event
+  # on any active gaze elements.
+  #
+  # @method disable
+  # @public
+
+
   disable: ->
     @triggerEvents 'gazeleave'
-    @gazeEls = []
+    @gazeEl = null
     @indicator.hide()
     @enabled = false
 
+
   ##
   # Calculates the positional offsets of the browser window relative to the
-  # screen.
+  # screen. This method will currently return the incorrect result if something
+  # is open on the bottom of the window, such as the developer tools.
   #
   # @todo This should use a click event, or perhaps be delegated to the clients.
-  calcScreenOffsets: ->
+  #
+  # @method _calcScreenOffsets
+  # @private
+
+  _calcScreenOffsets: ->
     # compute width of borders
     borderWidth = (window.outerWidth - window.innerWidth) / 2
 
     # compute absolute page position
-    innerScreenX = window.screenX + borderWidth
-    innerScreenY = (window.outerHeight - window.innerHeight - borderWidth) +
+    @innerScreenX = window.screenX + borderWidth
+    @innerScreenY = (window.outerHeight - window.innerHeight - borderWidth) +
       window.screenY
-
-    @innerScreenX = innerScreenX
-    @innerScreenY = innerScreenY
 
 
   ##
-  # @todo This method should use the timestamp on the frame, not a new Date
-  # object when pushing opens and closes.
+  # This method handles frames as they are delivered over the websocket
+  # connection. A frame is a single measurement set of gaze position and eye
+  # availability. Eye movement is transmitted from the eye tracker to this
+  # method, via the websocket.
+  #
+  # @param {Frame} frame - The EyeJS frame to process.
+  #
+  # @method handleFrame
+  # @public
+
   handleFrame: (frame) ->
     if @frozen or !@enabled or !@windowActive then return
 
@@ -213,9 +193,13 @@ module.exports = class EyeJS extends EventEmitter
 
     @lastFrame = frame
 
+    # Only handle frames that have gaze position information.
     if frame.avg.x != 0 and frame.avg.y != 0
-      @calcScreenOffsets()
 
+      # Calculate the window offset.
+      @_calcScreenOffsets()
+
+      # Correct for different pixel densities.
       frame.avg.x /= window.devicePixelRatio
       frame.avg.y /= window.devicePixelRatio
 
@@ -223,20 +207,23 @@ module.exports = class EyeJS extends EventEmitter
       frame.avg.x -= @innerScreenX
       frame.avg.y -= @innerScreenY
 
+      # Smooth the positions.
       @smoothedX.push frame.avg.x
       @smoothedY.push frame.avg.y
 
+      # Build and emit the gaze event.
       e =
         rawx: frame.avg.x
         rawy: frame.avg.y
         x:    @smoothedX.top()
         y:    @smoothedY.top()
-
       @emit 'gaze', e
 
+      # Emit the raw frame, if anyone cares.
       @emit 'raw', frame
 
+      # Move the indicator to the new position.
       @indicator.move @smoothedX.top(), @smoothedY.top()
 
+      # Handle the actual gaze.
       @handleGaze()
-      @handleBlinks(frame)

@@ -38,8 +38,10 @@ module.exports = class EyeJS extends EventEmitter
 
     @blinks = new BlinkController
 
-    @blinks.on 'open', =>
+    @blinks.on 'open', (timeClosed) =>
       @triggerEvents 'eyesopen'
+      if timeClosed > 400 and timeClosed < 1000
+        @triggerEvents 'blink click'
 
     @blinks.on 'close', =>
       @triggerEvents 'eyesclose'

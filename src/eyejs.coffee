@@ -23,6 +23,15 @@ S_MIN = 1.2
 
 FRAME_TIMEOUT = 400
 
+
+##
+# The amount of time until we trigger a fixation on an element.
+#
+# @const FIXATION_TIME
+
+FIXATION_TIME = 180
+
+
 ##
 # The EyeJS class.
 #
@@ -38,12 +47,17 @@ module.exports = class EyeJS extends EventEmitter
 
     @blinks = new BlinkController
 
+    @blinkEl = null
+
     @blinks.on 'open', (timeClosed) =>
       @triggerEvents 'eyesopen'
-      if timeClosed > 400 and timeClosed < 1000
+      if timeClosed > 400 and timeClosed < 2000
+        @emit 'blink', @fixatedEl
         @triggerEvents 'blink click'
+      @_preventElChange = false
 
     @blinks.on 'close', =>
+      @_preventElChange = true
       @triggerEvents 'eyesclose'
 
     # The last frame received.
@@ -52,11 +66,19 @@ module.exports = class EyeJS extends EventEmitter
     # Element currently gazing-at.
     @gazeEl = null
 
+    # Element currently fixated-on.
+    @fixatedEl = null
+
+    # Timer to track fixations.
+    @fixationTimer = null
+
     @windowActive = true
 
     @indicator = new Indicator size: 60, visible: true
 
     @frozen = false
+
+    @_preventElChange = false
 
     @enabled = true
 
@@ -75,6 +97,17 @@ module.exports = class EyeJS extends EventEmitter
         @blinks.pushClose()
     , 100
 
+
+  triggerGazeEvents: (event) ->
+    @_triggerEvents(event, @gazeEl)
+
+
+  triggerEvents: (event) ->
+    @_triggerEvents(event, @fixatedEl)
+
+
+
+
   ##
   # This method triggers space-separated event names on the current gaze
   # element.
@@ -82,15 +115,28 @@ module.exports = class EyeJS extends EventEmitter
   # @method triggerEvents
   # @public
 
-  triggerEvents: (event) ->
+  _triggerEvents: (event, el) ->
     event = event.split /\s+/
     if event.length == 1
       event = event[0]
       evt = new CustomEvent event, bubbles: true, clientX: 0, clientY: 0
-      if @gazeEl isnt null then @gazeEl.dispatchEvent(evt)
+      if el isnt null then el.dispatchEvent(evt)
     else
       for e in event
         @triggerEvents e
+
+
+
+  _resetFixationTimer: ->
+    clearTimeout @fixationTimer
+    @fixationTimer = setTimeout =>
+      @fixatedEl = @gazeEl
+      if @fixatedEl is null then return
+      @fixatedEl.setAttribute 'data-eyejs-fixated', ''
+      @triggerEvents 'fixation'
+      @emit 'fixation', @fixatedEl
+    , FIXATION_TIME
+
 
   ##
   # Handles gaze event. If the current gaze element is unchanged, then
@@ -103,6 +149,7 @@ module.exports = class EyeJS extends EventEmitter
   # closed or otherwise off screen.
 
   handleGaze: ->
+    if @_preventElChange then return
 
     # Get the element currently under the gaze indicator.
     el = @indicator.getGazeElement()
@@ -110,12 +157,24 @@ module.exports = class EyeJS extends EventEmitter
     # If there is an element... (there may not be if the user isn't looking
     # inside the browser window).
     if el
-      el.setAttribute 'eyejs-gaze', ''
+      el.setAttribute 'data-eyejs-gaze', ''
+
       if @gazeEl and @gazeEl isnt el
-        @gazeEl.removeAttribute 'eyejs-gaze'
-        @triggerEvents 'gazeleave mouseleave mouseout'
+        @gazeEl.removeAttribute 'data-eyejs-gaze'
+        @triggerGazeEvents 'gazeleave mouseleave mouseout'
+
+      if @fixatedEl and @fixatedEl isnt el
+        @fixatedEl.removeAttribute 'data-eyejs-fixated'
+        @triggerEvents 'fixationend'
+        @emit 'fixationend', @fixatedEl
+        @fixatedEl = null
+
+      if @gazeEl isnt el and @fixatedEl is null
+        @_resetFixationTimer()
+
       @gazeEl = el
-      @triggerEvents 'gaze mousemove mouseenter mouseover'
+      @triggerGazeEvents 'gaze mousemove mouseenter mouseover'
+
     else
       @gazeEl = null
 
@@ -213,14 +272,6 @@ module.exports = class EyeJS extends EventEmitter
       @smoothedX.push frame.avg.x
       @smoothedY.push frame.avg.y
 
-      # Build and emit the gaze event.
-      e =
-        rawx: frame.avg.x
-        rawy: frame.avg.y
-        x:    @smoothedX.top()
-        y:    @smoothedY.top()
-      @emit 'gaze', e
-
       # Emit the raw frame, if anyone cares.
       @emit 'raw', frame
 
@@ -229,3 +280,12 @@ module.exports = class EyeJS extends EventEmitter
 
       # Handle the actual gaze.
       @handleGaze()
+
+      # Build and emit the gaze event.
+      e =
+        rawx: frame.avg.x
+        rawy: frame.avg.y
+        x:    @smoothedX.top()
+        y:    @smoothedY.top()
+        el:   @gazeEl
+      @emit 'gaze', e

@@ -1,6 +1,6 @@
 EventEmitter = (require 'events').EventEmitter
 
-THRESHOLD = 400
+THRESHOLD = 200
 
 module.exports = class BlinkController extends EventEmitter
 

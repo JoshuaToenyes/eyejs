@@ -93,6 +93,7 @@ module.exports = class EyeJS extends EventEmitter
     @connection.connect()
 
     @frameWatcher = setInterval =>
+      if not @lastFrame then return
       if _.now() - @lastFrame.timestamp > FRAME_TIMEOUT
         @blinks.pushClose()
     , 100
@@ -173,7 +174,7 @@ module.exports = class EyeJS extends EventEmitter
         @_resetFixationTimer()
 
       @gazeEl = el
-      @triggerGazeEvents 'gaze mousemove mouseenter mouseover'
+      @triggerGazeEvents 'gaze mouseenter mouseover'
 
     else
       @gazeEl = null

@@ -118,6 +118,9 @@ module.exports = class EyeJS extends EventEmitter
 
   _triggerEvents: (event, el) ->
     event = event.split /\s+/
+    if el.tagName is 'INPUT'
+      el.focus()
+      return
     if event.length == 1
       event = event[0]
       evt = new CustomEvent event, bubbles: true, clientX: 0, clientY: 0

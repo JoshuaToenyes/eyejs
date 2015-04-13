@@ -45,7 +45,7 @@ class ElementCounter
     # Next, if an anchor tag is found, return it with the second-highest
     # priority.
     for el in @elements
-      if el.tagName is 'A' or el.tagName is 'IMG'
+      if el.tagName is 'A' or el.tagName is 'IMG' or el.tagName is 'INPUT'
         return el
 
     # Lastly, iterate up the DOM and look for an anchor tag parent. If one is

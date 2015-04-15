@@ -118,7 +118,7 @@ module.exports = class EyeJS extends EventEmitter
 
   _triggerEvents: (event, el) ->
     event = event.split /\s+/
-    if el.tagName is 'INPUT'
+    if el?.tagName is 'INPUT'
       el.focus()
       return
     if event.length == 1
